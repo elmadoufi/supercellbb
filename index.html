@@ -347,32 +347,66 @@
     </div>
 
     <script>
-        // Platform detection
-        const platforms = {
-            tiktok: /tiktok|musical\.ly|tt\.live/i,
-            instagram: /instagram/i,
-            facebook: /fb|facebook|fb_iab|fb4a/i,
-            whatsapp: /whatsapp/i,
-            messenger: /messenger/i,
-            snapchat: /snapchat/i,
-            pinterest: /pinterest/i,
-            linkedin: /linkedin/i,
-            twitter: /twitter/i
-        };
-
-        // Check if user is in in-app browser
-        function isInAppBrowser() {
+        // BETTER TikTok detection - checks multiple indicators
+        function detectTikTokBrowser() {
             const userAgent = navigator.userAgent.toLowerCase();
-            return Object.values(platforms).some(pattern => pattern.test(userAgent));
+            
+            // Method 1: Check for TikTok in user agent
+            if (userAgent.includes('tiktok') || 
+                userAgent.includes('musical.ly') || 
+                userAgent.includes('tt_live')) {
+                return true;
+            }
+            
+            // Method 2: Check for mobile app indicators
+            const isMobile = /iphone|ipad|ipod|android|webos|blackberry|windows phone/i.test(userAgent);
+            const isInApp = !userAgent.includes('chrome') && 
+                           !userAgent.includes('safari') && 
+                           !userAgent.includes('firefox') &&
+                           isMobile;
+            
+            // Method 3: Check for TikTok's webview
+            if (isMobile && userAgent.includes('mozilla') && userAgent.includes('applewebkit')) {
+                // Check for TikTok's webview pattern
+                if (!userAgent.includes('crios') && // Not Chrome iOS
+                    !userAgent.includes('fxios') && // Not Firefox iOS
+                    !userAgent.includes('version/')) { // Not Safari
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        // Check if it's a regular browser
+        function isRegularBrowser() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            
+            // Regular browsers
+            const regularBrowsers = [
+                'chrome', 'safari', 'firefox', 'edge', 'opera',
+                'crios', 'fxios', 'version/', 'msie', 'trident'
+            ];
+            
+            return regularBrowsers.some(browser => userAgent.includes(browser));
         }
 
         // Initialize page
         function init() {
-            // If NOT in in-app browser (Chrome/Safari/Firefox), redirect immediately
-            if (!isInAppBrowser()) {
-                window.location.href = "https://link-supercell.online/";
+            // ALWAYS show instructions first (for safety)
+            console.log("User Agent:", navigator.userAgent);
+            
+            // Check if it's a regular browser
+            if (isRegularBrowser()) {
+                console.log("Regular browser detected, redirecting...");
+                // Redirect to your website
+                setTimeout(() => {
+                    window.location.href = "https://link-supercell.online/";
+                }, 100); // Small delay to ensure page loads
+            } else {
+                console.log("Likely in-app browser, showing instructions...");
+                // Stay on instruction page
             }
-            // If in TikTok/Instagram etc., show the instructions (already visible)
         }
 
         // Run when page loads
